@@ -3,15 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./ui/StartScreen.css">
     <script src="https://cdn.jsdelivr.net/npm/@playcanvas/ammo@1.0.3/ammo/ammo.js"></script>
     <script src="https://code.playcanvas.com/playcanvas-stable.min.js"></script>
     <title>Project M</title>
 </head>
 <body>
-    <canvas id="application-canvas"></canvas>
-    <script src="./src/main.js" type="module"></script>
-    <script>
-        window.Ammo = undefined;
-    </script>
+    <div id="canvas-container">
+        <canvas id="application-canvas"></canvas>
+        <script src="./src/main.js" type="module"></script>
+        <script>
+            window.Ammo = undefined;
+        </script>
+    </div>
+    
+    <div id="start-screen">
+        <h1 class="title">Undead Survival</h1>
+        <button id="start-button" class="start-button">Start Game</button>
+        <div class="version">by Ha Minh Quan</div>
+    </div>
 </body>
 </html>

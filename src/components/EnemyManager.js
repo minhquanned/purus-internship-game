@@ -7,8 +7,8 @@ export class EnemyManager {
     // Spawn settings
     enemySpawnTimer = 0;
     enemySpawnCooldown = 2;
-    spawnDistance = 15;
-    spawnRadius = 16;
+    spawnDistance = 16;
+    spawnRadius = 17;
     minEnemySpacing = 2;
     maxSpawnAttempts = 10;
     

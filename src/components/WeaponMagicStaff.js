@@ -2,7 +2,7 @@ import * as pc from 'playcanvas';
 import { Enemy } from './Enemy';
 
 export class MagicStaff {
-    fireRate = 2;
+    fireRate = 1.8;
     fireTimer = 0;
     attackRange = 10;
     speed = 15;

@@ -1,5 +1,6 @@
 import { MagicStaff } from './WeaponMagicStaff';
 import * as pc from 'playcanvas';
+import { isPaused } from './GameState';
 
 export class Player {
     animations = {};
@@ -107,16 +108,18 @@ export class Player {
         }
     }
 
-    addKeyboardControls() {
+    addKeyboardControls(dt) {
+        // console.log(isPaused);
+        // if (isPaused) return;
+
         const keyboard = new pc.Keyboard(window);
-        const mouse = new pc.Mouse(this.app.graphicsDevice.canvas);
-        mouse.enablePointerLock();
 
         window.addEventListener("contextmenu", (event) => {
             event.preventDefault();
         });
 
-        this.app.on("update", (dt) => {            
+        this.app.on("update", (dt) => {       
+            if (isPaused) return;     
             if (keyboard.isPressed(pc.KEY_W)) this.movement.z -= this.speed * dt;
             if (keyboard.isPressed(pc.KEY_A)) this.movement.x -= this.speed * dt;
             if (keyboard.isPressed(pc.KEY_S)) this.movement.z += this.speed * dt;

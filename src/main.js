@@ -3,13 +3,21 @@ import { Player } from './components/Player';
 import { EnemyManager } from './components/EnemyManager';
 import { CameraHandler } from './components/CameraHandler';
 import { Map } from './components/Map';
+import { setPaused, isPaused } from './components/GameState';
+
+let delay = 0;
+
+document.getElementById('start-button').addEventListener('click', () => {
+    document.getElementById('start-screen').style.display = 'none';
+    setPaused(false);
+});
 
 async function initializeGame() {
     try {
         // Load Ammo.js first
         const AmmoLib = await new Promise((resolve, reject) => {
             const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/gh/kripken/ammo.js@HEAD/builds/ammo.js';
+            script.src = 'https://cdn.jsdelivr.net/gh/kripken/ammo.js@HEAD/builds/ammo.wasm.js';
             script.async = true;
 
             script.onload = async () => {
@@ -109,27 +117,6 @@ async function initializeGame() {
         light.setEulerAngles(45, 30, 0);
         app.root.addChild(light);
 
-        // Create physics ground plane
-        const ground = new pc.Entity('Ground');
-        
-        // Set initial transform before adding physics components
-        ground.setPosition(0, 0, 0);
-        ground.setRotation(0, 0, 0);
-        ground.setLocalScale(1, 1, 1);
-        
-        app.root.addChild(ground);
-        
-        // Add physics components after the entity is in the scene
-        ground.addComponent('collision', {
-            type: 'box',
-            halfExtents: new pc.Vec3(50, 0.1, 50)
-        });
-        
-        ground.addComponent('rigidbody', {
-            type: 'static',
-            restitution: 0.5
-        });
-
         // Initialize game components with proper error handling
         let player;
         try {
@@ -166,6 +153,9 @@ async function initializeGame() {
         let accumulator = 0;
 
         app.on("update", (dt) => {
+            delay += dt;
+            if (isPaused && delay >= 1) return;
+
             accumulator += dt;
             
             // Update physics with fixed timestep
