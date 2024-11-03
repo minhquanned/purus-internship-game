@@ -3,13 +3,74 @@ import { Player } from './components/Player';
 import { EnemyManager } from './components/EnemyManager';
 import { CameraHandler } from './components/CameraHandler';
 import { Map } from './components/Map';
-import { setPaused, isPaused } from './components/GameState';
+import { MagicStaff } from './components/WeaponMagicStaff';
+import { setPaused, isPaused, setGuided, isGuided } from './components/GameState';
+import { UIManager } from './components/UIManager';
+import { GameManager } from './components/GameManager';
 
-let delay = 0;
+let uiManager = new UIManager();
+uiManager.initialize(
+    () => isPaused, 
+    () => isGuided
+);
 
 document.getElementById('start-button').addEventListener('click', () => {
     document.getElementById('start-screen').style.display = 'none';
     setPaused(false);
+
+    // Show in-game UI
+    const inGameUI = document.getElementById('ingame-ui');
+    inGameUI.classList.add('show');
+
+    // Show guide
+    const movementGuide = document.getElementById('movement-guide');
+    const attackGuide = document.getElementById('attack-guide');
+    movementGuide.classList.add('show');
+    
+    const pressedKeys = {
+        w: false,
+        a: false,
+        s: false,
+        d: false
+    };
+
+    // Key press check
+    function checkAllKeysPressed() {
+        return Object.values(pressedKeys).every(value => value);
+    }
+
+    // Key press handler
+    function handleKeyPress(e) {
+        const key = e.key.toLowerCase();
+        if (['w', 'a', 's', 'd'].includes(key)) {
+            pressedKeys[key] = true;
+            const keyElement = document.querySelector(`[data-key="${key}"]`);
+            if (keyElement) {
+                keyElement.classList.add('pressed');
+            }
+
+            if (checkAllKeysPressed()) {
+                setGuided(false);
+                uiManager.initializeTimer();
+                
+                setTimeout(() => {
+                    movementGuide.classList.remove('show');
+                    movementGuide.classList.add('hide');
+                    // Cleanup
+                    window.removeEventListener('keydown', handleKeyPress);
+
+                    attackGuide.classList.add('show');
+                }, 1500);
+
+                setTimeout(() => {
+                    attackGuide.classList.remove('show');
+                    attackGuide.classList.add('hide');
+                }, 5000);
+            }
+        }
+    }
+
+    window.addEventListener('keydown', handleKeyPress);
 });
 
 async function initializeGame() {
@@ -99,6 +160,10 @@ async function initializeGame() {
         }
         app.systems.rigidbody.physicsWorld = physicsWorld;
 
+        const gameManager = new GameManager(app);
+        // gameManager.setPhysicsWorld(physicsWorld)
+        window.gameManager = gameManager;
+
         // Handle window resize
         window.addEventListener('resize', () => {
             app.resizeCanvas();
@@ -122,8 +187,8 @@ async function initializeGame() {
         try {
             player = new Player(
                 app, 
-                "../assets/models/Mage.glb", 
-                "../assets/textures/mage_texture.png", 
+                "models/Mage.glb", 
+                "textures/mage_texture.png", 
                 0.4,
                 []
             );
@@ -135,17 +200,26 @@ async function initializeGame() {
         let enemyManager;
         try {
             enemyManager = new EnemyManager(app, player);
-            await enemyManager.spawnEnemy(
-                "../assets/models/Skeleton_Minion.glb", 
-                "../assets/textures/skeleton_texture.png", 
-                0.4
-            );
+            // await enemyManager.spawnEnemy(
+            //     "models/Skeleton_Minion.glb", 
+            //     "textures/skeleton_texture.png", 
+            //     0.4
+            // );
         } catch (error) {
             console.error('Failed to initialize enemy manager:', error);
             throw new Error('Enemy manager initialization failed: ' + error.message);
         }
 
-        const map = new Map(app, "../assets/textures/grass_texture.jpg", player);
+        let magicStaff;
+        try {
+            magicStaff = new MagicStaff(app, player.entity, enemyManager.getEnemies());
+        } catch (error) {
+            console.error('Failed to initialize magic staff:', error);
+            throw new Error('Magic staff initialization failed: ' + error.message);
+        }
+        enemyManager.setWeaponSystem(magicStaff);
+
+        const map = new Map(app, "textures/grass_texture.jpg", player);
         const cameraHandler = new CameraHandler(app, player.entity);
 
         // Game update loop with fixed timestep
@@ -153,8 +227,9 @@ async function initializeGame() {
         let accumulator = 0;
 
         app.on("update", (dt) => {
-            delay += dt;
-            if (isPaused && delay >= 1) return;
+            cameraHandler.update(dt);
+
+            if (isPaused || isGuided) return;
 
             accumulator += dt;
             
@@ -165,11 +240,13 @@ async function initializeGame() {
             }
             
             // Update game components
-            if (player && enemyManager) {
+            if (player && enemyManager && magicStaff) {
                 player.setEnemies(enemyManager.getEnemies());
                 enemyManager.update(dt);
                 player.update(dt);
-                cameraHandler.update(dt);
+                uiManager.updateHPBar(player.health, player.maxHealth);
+                uiManager.updateTimer();
+                magicStaff.update(dt);
             }
         });
         

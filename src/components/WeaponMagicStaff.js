@@ -8,6 +8,16 @@ export class MagicStaff {
     speed = 15;
     projectiles = [];
 
+    // Upgrade stuffs
+    currentLevel = 1;
+    maxLevel = 20;
+    killsNeededForUpgrade = 5;
+
+    upgradeStats = {
+        damage: 5,
+        fireRateReduction: 0.2,
+    }
+
     static COLLISION_PROJECTILE = 8;
 
     constructor(app, playerEntity, enemies, damage = 10) {
@@ -129,17 +139,26 @@ export class MagicStaff {
         return nearestEnemy;
     }
 
-    upgradeWeapon(enemyKillCounter) {
-        console.log("Enemy kill counter: ", enemyKillCounter);
-        if (enemyKillCounter % 2 == 0) {
-            console.log("Upgrade weapon!");
-
-            this.damage += 1;
-            this.fireRate -= 1;
-            if (this.fireRate <= 0) {
-                this.fireRate = 0.01;
-            }
+    checkForUpgrade(enemyKillCount) {
+        if (this.currentLevel >= this.maxLevel) {
+            return;
         }
+
+        if (enemyKillCount % this.killsNeededForUpgrade === 0) {
+            this.upgradeWeapon();
+        }
+    }
+
+    upgradeWeapon() {
+        if (this.currentLevel >= this.maxLevel) {
+            console.log("Weapon already at maximum level!");
+            return;
+        }
+
+        this.currentLevel++;
+        
+        this.damage += this.upgradeStats.damage;
+        this.fireRate = Math.max(0.1, this.fireRate - this.upgradeStats.fireRateReduction);
     }
 
     setEnemies(enemies) {

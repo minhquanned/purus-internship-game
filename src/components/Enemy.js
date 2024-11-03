@@ -11,7 +11,7 @@ export class Enemy {
 
     // Combat stuff
     health = 20;
-    attackRange = 0.6;
+    attackRange = 0.7;
     attackCooldown = 2;
     attackTimer = 0;
 
@@ -27,6 +27,10 @@ export class Enemy {
         this.app = app;
         this.playerEntity = playerEntity;
         this.health = health;
+
+        // Track rotation
+        this.lastFacingDirection = new pc.Vec3();
+        this.targetRotation = 0;
         
         // Create main entity container
         this.entity = new pc.Entity("Enemy");
@@ -161,112 +165,223 @@ export class Enemy {
     }
 
     death() {
-        console.log("Enemy died!");
+        if (!this.isAlive) return; // Prevent multiple death calls
+    
         this.isAlive = false;
-        this.entity.destroy();
+
+        // Disable collision and physics during death animation
+        if (this.entity.collision) {
+            this.entity.collision.enabled = false;
+        }
+        if (this.entity.rigidbody) {
+            this.entity.rigidbody.enabled = false;
+        }
+
+        // Add death animation if available
+        if (this.animations["Lie_Down"]) {
+            // Store current rotation before death
+            const currentRotation = this.entity.getEulerAngles().clone();
+
+            // Play the death animation without looping
+            this.playAnimation("Lie_Down", false);
+            
+            // Calculate animation duration and add a small buffer
+            const deathAnim = this.animations["Lie_Down"];
+            const animationDuration = deathAnim ? (deathAnim.duration * 1000) * 1/2 : 1000;
+
+            // Lock rotation during death animation
+            const maintainRotation = () => {
+                if (this.entity && !this.entity.isReadyForDestruction) {
+                    // Keep the stored rotation
+                    this.entity.setEulerAngles(0, currentRotation.y, 0);
+                }
+            };
+            
+            // Add update listener for rotation
+            this.app.on('update', maintainRotation);
+            
+            // Set destruction flag after animation completes
+            setTimeout(() => {
+                if (this.entity) {
+                    this.app.off('update', maintainRotation);
+                    this.entity.isReadyForDestruction = true;
+                }
+            }, animationDuration);
+        } else {
+            // If no death animation, mark for immediate destruction
+            this.entity.isReadyForDestruction = true;
+        }
     }
 
     playAnimation(animationName, loop = true) {
-        if (this.animations[animationName] && this.currentAnim !== animationName) {
-            this.modelEntity.anim?.baseLayer.play(animationName);
+        if (!this.modelEntity?.anim || !this.animations[animationName]) {
+            return;
+        }
 
-            if (!loop) {
-                const animDuration = this.modelEntity.anim?.baseLayer.activeStateDuration;
-                this.app.on("update", (dt) => {
-                    if (this.modelEntity.anim?.baseLayer && animDuration !== undefined && this.modelEntity.anim.baseLayer.activeStateProgress >= animDuration) {
-                        this.playAnimation("Idle");
-                    }
-                });
+        if (this.currentAnim !== animationName) {
+            // Stop current animation
+            if (this.currentAnim) {
+                // this.modelEntity.anim.baseLayer.stop();
             }
 
+            // Play new animation
+            this.modelEntity.anim.baseLayer.play(animationName, {
+                loop: loop
+            });
+
             this.currentAnim = animationName;
+
+            // Handle non-looping animations
+            if (!loop) {
+                const anim = this.animations[animationName];
+                if (anim) {
+                    // Remove any existing animation complete listener
+                    if (this._animationCompleteCallback) {
+                        this.app.off('update', this._animationCompleteCallback);
+                    }
+
+                    // Create new animation complete listener
+                    this._animationCompleteCallback = (dt) => {
+                        if (this.modelEntity?.anim?.baseLayer) {
+                            const progress = this.modelEntity.anim.baseLayer.activeTimeSeconds;
+                            if (progress >= anim.duration) {
+                                this.playAnimation("Idle", true);
+                                this.app.off('update', this._animationCompleteCallback);
+                                this._animationCompleteCallback = null;
+                            }
+                        }
+                    };
+
+                    this.app.on('update', this._animationCompleteCallback);
+                }
+            }
         }
     }
 
     attackPlayer() {
-        if (this.attackTimer >= this.attackCooldown) {
+        if (this.attackTimer >= this.attackCooldown && !this.attacking) {
+            // Lock in the current facing direction when starting attack
             this.setAttacking(true);
-            // this.playerEntity.takeDamage(this.damage);
+            
+            // Store current direction to player for the attack
+            const playerPos = this.playerEntity.getPosition();
+            const enemyPos = this.entity.getPosition();
+            this.lastFacingDirection = new pc.Vec3()
+                .sub2(playerPos, enemyPos)
+                .normalize();
+            
+            // Calculate and store the target rotation
+            this.targetRotation = Math.atan2(this.lastFacingDirection.x, this.lastFacingDirection.z) * pc.math.RAD_TO_DEG;
+            
+            // Set the rotation immediately to face the player
+            this.entity.setEulerAngles(0, this.targetRotation, 0);
+            
+            // Play attack animation
             this.playAnimation("2H_Melee_Attack_Slice", false);
+            
+            // Apply damage after a delay to match animation
+            setTimeout(() => {
+                if (this.isAlive && this.playerEntity.script && this.playerEntity.script.player) {
+                    this.playerEntity.script.player.takeDamage(10);
+                }
+                this.playAnimation("Idle", true);
+            }, 1000);
 
-            // Debug
-            console.log("Enemy attack!");
-            console.log("Player health: ", this.playerEntity.health);
-
+            
+            // Reset attack state after animation
             setTimeout(() => {
                 this.setAttacking(false);
+                this.attackTimer = 0;
             }, 1200);
-
-            this.attackTimer = 0;
         }
     }
 
     chasePlayer(dt) {
-        if (!this.entity.rigidbody) return;
+        if (!this.entity.rigidbody || !this.isAlive) return;
 
         const playerPos = this.playerEntity.getPosition();
         const enemyPos = this.entity.getPosition();
         const distance = enemyPos.distance(playerPos);
 
         // Calculate direction to player
-        const direction = new pc.Vec3().sub2(playerPos, enemyPos).normalize();
+        const direction = new pc.Vec3()
+            .sub2(playerPos, enemyPos)
+            .normalize();
         direction.y = 0; // Keep movement horizontal
 
         if (distance <= this.attackRange) {
-            this.attackPlayer();
-            // Stop movement when attacking
+            // Stop movement when in attack range
             this.entity.rigidbody.linearVelocity = new pc.Vec3(0, 0, 0);
-        } else if (!this.attacking) {
-            // Only update movement if not attacking
-            const currentVel = this.entity.rigidbody.linearVelocity;
             
-            const targetVelocity = new pc.Vec3(
-                direction.x * this.speed,
-                currentVel.y,
-                direction.z * this.speed
-            );
+            if (!this.attacking) {
+                // Only update rotation and start attack if not already attacking
+                this.lastFacingDirection.copy(direction);
+                this.targetRotation = Math.atan2(direction.x, direction.z) * pc.math.RAD_TO_DEG;
+                this.entity.setEulerAngles(0, this.targetRotation, 0);
+                this.attackPlayer();
+            } else {
+                // During attack, maintain the stored rotation
+                this.entity.setEulerAngles(0, this.targetRotation, 0);
+            }
 
-            const velocityChange = new pc.Vec3().sub2(targetVelocity, currentVel);
-            const force = new pc.Vec3(
-                velocityChange.x * this.entity.rigidbody.mass * (1/dt),
-                0,
-                velocityChange.z * this.entity.rigidbody.mass * (1/dt)
-            );
+            if (!this.attacking) {
+                this.playAnimation("Idle");
+            }
+        } else {
+            if (!this.attacking && this.isAlive) {
+                // Update rotation and movement only when not attacking
+                this.lastFacingDirection.copy(direction);
+                this.targetRotation = Math.atan2(direction.x, direction.z) * pc.math.RAD_TO_DEG;
+                this.entity.setEulerAngles(0, this.targetRotation, 0);
 
-            this.entity.rigidbody.applyForce(force);
-        }
+                // Apply movement force
+                const currentVel = this.entity.rigidbody.linearVelocity;
+                const targetVelocity = new pc.Vec3(
+                    direction.x * this.speed,
+                    currentVel.y,
+                    direction.z * this.speed
+                );
 
-        // Update rotation based on state
-        if (!this.attacking) {
-            if (distance > this.attackRange) {
-                const angle = Math.atan2(direction.x, direction.z);
-                this.entity.setEulerAngles(0, angle * pc.math.RAD_TO_DEG, 0);
+                const velocityChange = new pc.Vec3().sub2(targetVelocity, currentVel);
+                const force = new pc.Vec3(
+                    velocityChange.x * this.entity.rigidbody.mass * (1/dt),
+                    0,
+                    velocityChange.z * this.entity.rigidbody.mass * (1/dt)
+                );
+
+                this.entity.rigidbody.applyForce(force);
                 this.playAnimation("Running_A");
             } else {
-                this.playAnimation("Idle_B");
+                // During attack, maintain the stored rotation
+                this.entity.setEulerAngles(0, this.targetRotation, 0);
             }
-            this.lastFacingDirection = direction;
-        } else {
-            const angle = Math.atan2(this.lastFacingDirection.x, this.lastFacingDirection.z);
-            this.entity.setEulerAngles(0, angle * pc.math.RAD_TO_DEG, 0);
         }
 
-        // Keep upright
-        const rotation = this.entity.getRotation();
-        rotation.x = 0;
-        rotation.z = 0;
-        this.entity.setRotation(rotation);
-
+        // Apply gravity and keep upright
         if (enemyPos.y > 0.1) {
             this.entity.rigidbody.applyForce(new pc.Vec3(0, -9.81 * this.entity.rigidbody.mass, 0));
         }
 
-        // Lock the rotation on the y-axis
+        // Lock rotation axes we don't want to change
         this.entity.rigidbody.angularFactor = new pc.Vec3(0, 0, 0);
+        const rotation = this.entity.getRotation();
+        rotation.x = 0;
+        rotation.z = 0;
+        this.entity.setRotation(rotation);
     }
 
     setAttacking(attacking) {
         this.attacking = attacking;
+        // When attack ends, immediately update rotation to face player
+        if (!attacking) {
+            const playerPos = this.playerEntity.getPosition();
+            const enemyPos = this.entity.getPosition();
+            const direction = new pc.Vec3()
+                .sub2(playerPos, enemyPos)
+                .normalize();
+            this.lastFacingDirection.copy(direction);
+            this.targetRotation = Math.atan2(direction.x, direction.z) * pc.math.RAD_TO_DEG;
+        }
     }
 
     update(dt) {

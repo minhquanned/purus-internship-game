@@ -1,6 +1,6 @@
 import { MagicStaff } from './WeaponMagicStaff';
 import * as pc from 'playcanvas';
-import { isPaused } from './GameState';
+import { isPaused, setPaused } from './GameState';
 
 export class Player {
     animations = {};
@@ -12,6 +12,7 @@ export class Player {
     
     // Combat stuff
     health = 100;
+    maxHealth = 100;
 
     // State
     attacking = false;
@@ -20,7 +21,34 @@ export class Player {
         this.app = app;
         this.entity = new pc.Entity("Player");
         this.enemies = enemies;
-        this.magicStaff = new MagicStaff(app, this.entity, this.enemies);
+        // this.magicStaff = new MagicStaff(app, this.entity, this.enemies);
+
+        // Add script component to player entity
+        this.entity.addComponent("script");
+        
+        // Create player script
+        try {
+            pc.createScript.get('player');
+        } catch (e) {
+            const PlayerScript = pc.createScript('player');
+            
+            PlayerScript.prototype.swap = function(old) {
+                this.playerInstance = old.playerInstance;
+            };
+
+            PlayerScript.prototype.initialize = function() {
+                this.playerInstance = this.entity.playerInstance;
+            };
+
+            PlayerScript.prototype.takeDamage = function(damage) {
+                if (this.playerInstance) {
+                    this.playerInstance.takeDamage(damage);
+                }
+            };
+        }
+
+        this.entity.playerInstance = this;
+        this.entity.script.create('player');
 
         // Load model and animation
         app.assets.loadFromUrl(modelUrl, "container", (err, asset) => {
@@ -78,17 +106,34 @@ export class Player {
     }
 
     takeDamage(damage) {
+        if (this.health <= 0) return;
+        
         this.health -= damage;
-        console.log("Player health: ", this.health);
+        console.log("Player took damage! Health: ", this.health);
 
+        // Check for death
         if (this.health <= 0) {
             console.log("Player has been defeated!");
-            // this.die();
+            this.die();
         }
     }
 
     die() {
-        this.entity.destroy();
+        // Add death animation if available
+        if (this.animations["Lie_Down"]) {
+            this.playAnimation("Lie_Down", false);
+            
+            // Delay destruction until animation completes
+            setTimeout(() => {
+                window.gameManager.showGameOver();
+                this.entity.destroy();
+                setPaused(true);
+            }, 2000); // Adjust timeout based on animation length
+        } else {
+            window.gameManager.showGameOver();
+            this.entity.destroy();
+            setPaused(true);
+        }
     }
 
     playAnimation(animationName, loop = true) {
@@ -154,8 +199,11 @@ export class Player {
     }
 
     update(dt) {
-        this.magicStaff.setEnemies(this.enemies);
-        this.magicStaff.update(dt);
+        // this.magicStaff.setEnemies(this.enemies);
+        // this.magicStaff.update(dt);
+        if (this.health > this.maxHealth) {
+            this.health = this.maxHealth;
+        }
     }
 
     getEntity() {

@@ -7,16 +7,21 @@ export class EnemyManager {
     // Spawn settings
     enemySpawnTimer = 0;
     enemySpawnCooldown = 2;
-    spawnDistance = 16;
-    spawnRadius = 17;
+    spawnDistance = 18;
+    spawnRadius = 19;
     minEnemySpacing = 2;
     maxSpawnAttempts = 10;
+    weaponSystem = null;
     
     enemyKillCounter = 0;
 
     constructor(app, playerEntity) {
         this.app = app;
         this.playerEntity = playerEntity;
+    }
+
+    setWeaponSystem(weaponSystem) {
+        this.weaponSystem = weaponSystem;
     }
 
     spawnEnemy(modelUrl, textureUrl, scale) {
@@ -73,23 +78,35 @@ export class EnemyManager {
     update(dt) {
         this.enemySpawnTimer += dt;
         if (this.enemySpawnTimer >= this.enemySpawnCooldown) {
-            this.spawnEnemy("../../../assets/models/Skeleton_Minion.glb", "../../../assets/textures/skeleton_texture.png", 0.4);
+            this.spawnEnemy("models/Skeleton_Minion.glb", "textures/skeleton_texture.png", 0.4);
             this.enemySpawnTimer = 0;
         }
 
         // Update and clean up enemies
         for (let i = this.enemies.length - 1; i >= 0; i--) {
             const enemy = this.enemies[i];
+
             if (enemy.entity.position.y < -1 || !enemy) {
                 this.enemies.splice(i, 1);
                 enemy.entity.destroy();
-            } else if (!enemy.isAlive) {
-                this.enemies.splice(i, 1);
-                enemy.entity.destroy();
-                this.enemyKillCounter++;
-            } else {
-                enemy.update(dt);
+                continue;
             }
+
+            if (!enemy.isAlive) {
+                if (enemy.entity.isReadyForDestruction) {
+                    this.enemyKillCounter++;
+
+                    if (this.weaponSystem) {
+                        this.weaponSystem.checkForUpgrade(this.enemyKillCounter);
+                    }
+
+                    this.enemies.splice(i, 1);
+                    enemy.entity.destroy();
+                }
+                continue;
+            }
+            
+            enemy.update(dt);
         }
         // console.log(this.enemies);
     }
