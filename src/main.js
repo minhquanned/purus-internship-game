@@ -7,6 +7,7 @@ import { MagicStaff } from './components/WeaponMagicStaff';
 import { setPaused, isPaused, setGuided, isGuided } from './components/GameState';
 import { UIManager } from './components/UIManager';
 import { GameManager } from './components/GameManager';
+import { AudioManager } from './components/AudioManager';
 
 let uiManager = new UIManager();
 uiManager.initialize(
@@ -133,6 +134,14 @@ async function initializeGame() {
         // Start the application before physics setup
         app.start();
 
+        
+        const audioManager = new AudioManager();
+        await audioManager.initialize(app);
+        
+        audioManager.playBGM();
+        audioManager.setBGMVolume(0.2)
+        audioManager.setSFXVolume(0.4);
+
         // Initialize physics world
         console.log('Initializing physics world');
         const collisionConfiguration = new AmmoLib.btDefaultCollisionConfiguration();
@@ -161,7 +170,6 @@ async function initializeGame() {
         app.systems.rigidbody.physicsWorld = physicsWorld;
 
         const gameManager = new GameManager(app);
-        // gameManager.setPhysicsWorld(physicsWorld)
         window.gameManager = gameManager;
 
         // Handle window resize
@@ -200,11 +208,6 @@ async function initializeGame() {
         let enemyManager;
         try {
             enemyManager = new EnemyManager(app, player);
-            // await enemyManager.spawnEnemy(
-            //     "models/Skeleton_Minion.glb", 
-            //     "textures/skeleton_texture.png", 
-            //     0.4
-            // );
         } catch (error) {
             console.error('Failed to initialize enemy manager:', error);
             throw new Error('Enemy manager initialization failed: ' + error.message);
@@ -225,6 +228,17 @@ async function initializeGame() {
         // Game update loop with fixed timestep
         const FIXED_TIMESTEP = 1/60;
         let accumulator = 0;
+
+        // Play sound effects
+        // MagicStaff attack
+        magicStaff.on('attack', () => {
+            audioManager.playSFX('attack');
+        });
+
+        // // When player gets hit
+        magicStaff.on('enemyHit', () => {
+            audioManager.playSFX('hit');
+        });
 
         app.on("update", (dt) => {
             cameraHandler.update(dt);

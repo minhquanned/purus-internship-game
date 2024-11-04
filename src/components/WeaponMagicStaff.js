@@ -1,7 +1,7 @@
 import * as pc from 'playcanvas';
 import { Enemy } from './Enemy';
 
-export class MagicStaff {
+export class MagicStaff extends pc.EventHandler {
     fireRate = 1.8;
     fireTimer = 0;
     attackRange = 10;
@@ -11,7 +11,7 @@ export class MagicStaff {
     // Upgrade stuffs
     currentLevel = 1;
     maxLevel = 20;
-    killsNeededForUpgrade = 5;
+    killsNeededForUpgrade = 15;
 
     upgradeStats = {
         damage: 5,
@@ -21,6 +21,7 @@ export class MagicStaff {
     static COLLISION_PROJECTILE = 8;
 
     constructor(app, playerEntity, enemies, damage = 10) {
+        super();
         this.app = app;
         this.playerEntity = playerEntity;
         this.enemies = enemies;
@@ -28,6 +29,8 @@ export class MagicStaff {
     }
 
     fireProjectile(target) {
+        this.fire('attack');
+
         const projectile = new pc.Entity("Projectile");
         projectile.tags.add("projectile");
         
@@ -70,6 +73,7 @@ export class MagicStaff {
             
             if (contact.other?.tags?.has("enemy")) {
                 if (contact.other.script?.enemy) {
+                    this.fire('enemyHit');
                     contact.other.script.enemy.takeDamage(this.damage);
                 }
                 projectile.destroy();
@@ -129,6 +133,10 @@ export class MagicStaff {
         let nearestDistance = Infinity;
 
         for (const enemy of this.enemies) {
+            if (!enemy.isAlive) {
+                continue;
+            }
+
             const distance = this.playerEntity.getPosition().distance(enemy.getEntity().getPosition());
             if (distance < nearestDistance) {
                 nearestEnemy = enemy;
@@ -158,7 +166,7 @@ export class MagicStaff {
         this.currentLevel++;
         
         this.damage += this.upgradeStats.damage;
-        this.fireRate = Math.max(0.1, this.fireRate - this.upgradeStats.fireRateReduction);
+        this.fireRate = Math.max(0.2, this.fireRate - this.upgradeStats.fireRateReduction);
     }
 
     setEnemies(enemies) {

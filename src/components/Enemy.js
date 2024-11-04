@@ -63,7 +63,7 @@ export class Enemy {
             angularDamping: 1,
             enable: true,
         });
-
+ 
         // Add script component and create enemy script
         this.entity.addComponent("script");
 
