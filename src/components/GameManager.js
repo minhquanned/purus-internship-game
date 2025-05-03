@@ -157,7 +157,7 @@ export class GameManager {
     }
 
     initializeMapAndCamera() {
-        this.map = new Map(this.app, "textures/grass_texture.jpg", this.player);
+        this.map = new Map(this.app, `${BASE_PATH}/assets/textures/grass_texture.jpg`, this.player);
         this.cameraHandler = new CameraHandler(this.app, this.player.entity, new pc.Vec3(0, 10, 10), 10);
         this.cameraHandler.smoothing = 15;
 
