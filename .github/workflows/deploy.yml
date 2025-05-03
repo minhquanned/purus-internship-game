@@ -44,10 +44,10 @@ jobs:
             git push origin gh-pages
           fi
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Ensure this token has write permissions.
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          personal_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }} # Replace GITHUB_TOKEN with a PAT.
           publish_dir: ./dist
