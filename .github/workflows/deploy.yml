@@ -18,8 +18,13 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies
-        run: npm install
+      - name: Clean and install dependencies
+        run: |
+          rm -rf node_modules
+          npm install
+
+      - name: Ensure Vite is installed
+        run: npm install vite --force
 
       - name: Fix permissions for vite
         run: chmod +x ./node_modules/.bin/vite
