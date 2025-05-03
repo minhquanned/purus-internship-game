@@ -633,6 +633,7 @@ class Enemy {
     return this.entity;
   }
 }
+const BASE_PATH$2 = window.location.pathname.includes("purus-internship-game") ? "/purus-internship-game" : "";
 class EnemyManager {
   constructor(app, playerEntity) {
     __publicField(this, "enemies", []);
@@ -721,11 +722,11 @@ class EnemyManager {
     this._updateDifficulty(dt);
     this.enemySpawnTimer += dt;
     if (this.lastEliteSpawnTime >= this.eliteInterval) {
-      this.spawnEnemy("models/Skeleton_Minion.glb", "textures/skeleton_texture.png", 0.6, true);
+      this.spawnEnemy(`${BASE_PATH$2}/assets/models/Skeleton_Minion.glb`, `${BASE_PATH$2}/assets/textures/skeleton_texture.png`, 0.6, true);
       this.lastEliteSpawnTime = 0;
     }
     if (this.enemySpawnTimer >= this.enemySpawnCooldown) {
-      this.spawnEnemy("models/Skeleton_Minion.glb", "textures/skeleton_texture.png", 0.4);
+      this.spawnEnemy(`${BASE_PATH$2}/assets/models/Skeleton_Minion.glb`, `${BASE_PATH$2}/assets/textures/skeleton_texture.png`, 0.4);
       this.enemySpawnTimer = 0;
     }
     this._updateEnemies(dt);
@@ -1142,11 +1143,11 @@ class UIManager {
     return Math.floor((Date.now() - this.gameTimer.startTime) / 1e3);
   }
 }
-const BASE_PATH = window.location.pathname.includes("purus-internship-game") ? "/purus-internship-game" : "";
+const BASE_PATH$1 = window.location.pathname.includes("purus-internship-game") ? "/purus-internship-game" : "";
 const AUDIO_DEFS = {
-  bgm: { url: `${BASE_PATH}/assets/sounds/You-have-no-enemies.mp3`, loop: true },
-  attack: { url: `${BASE_PATH}/assets/sounds/Magic-staff-shoot.wav` },
-  hit: { url: `${BASE_PATH}/assets/sounds/Hurt.mp3` }
+  bgm: { url: `${BASE_PATH$1}/assets/sounds/You-have-no-enemies.mp3`, loop: true },
+  attack: { url: `${BASE_PATH$1}/assets/sounds/Magic-staff-shoot.wav` },
+  hit: { url: `${BASE_PATH$1}/assets/sounds/Hurt.mp3` }
 };
 const createAudioAssets = (app) => Object.fromEntries(
   Object.entries(AUDIO_DEFS).map(([key, { url }]) => [
@@ -1523,6 +1524,7 @@ class UpgradeSystem {
     });
   }
 }
+const BASE_PATH = window.location.pathname.includes("purus-internship-game") ? "/purus-internship-game" : "";
 class GameManager {
   constructor() {
     this.app = null;
@@ -1626,7 +1628,7 @@ class GameManager {
     this.app.root.addChild(light);
   }
   initializePlayer() {
-    this.player = new Player(this.app, "models/Mage.glb", "textures/mage_texture.png", 0.4, []);
+    this.player = new Player(this.app, `${BASE_PATH}/models/Mage.glb`, `${BASE_PATH}/textures/mage_texture.png`, 0.4, []);
   }
   initializeEnemyManager() {
     this.enemyManager = new EnemyManager(this.app, this.player);
