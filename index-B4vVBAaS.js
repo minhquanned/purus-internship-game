@@ -1524,7 +1524,7 @@ class UpgradeSystem {
     });
   }
 }
-const BASE_PATH = window.location.pathname.includes("purus-internship-game") ? "/purus-internship-game" : "";
+const BASE_PATH = window.location.pathname.includes("purus-internship-game") ? "/purus-internship-game" : "/";
 class GameManager {
   constructor() {
     this.app = null;
