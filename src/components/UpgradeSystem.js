@@ -1,4 +1,4 @@
-import { setPaused } from './GameState';
+import { setPaused } from './GameState.js';
 import { MagicStaff } from './WeaponMagicStaff.js';
 import { MagicBox } from './WeaponMagicBox.js';
 

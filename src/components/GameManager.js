@@ -1,11 +1,11 @@
-import { Player } from './Player';
-import { EnemyManager } from './EnemyManager';
-import { CameraHandler } from './CameraHandler';
-import { Map } from './Map';
-import { setPaused, isPaused, setGuided, isGuided } from './GameState';
-import { UIManager } from './UIManager';
-import { AudioManager } from './AudioManager';
-import { UpgradeSystem } from './UpgradeSystem';
+import { Player } from './Player.js';
+import { EnemyManager } from './EnemyManager.js';
+import { CameraHandler } from './CameraHandler.js';
+import { Map } from './Map.js';
+import { setPaused, isPaused, setGuided, isGuided } from './GameState.js';
+import { UIManager } from './UIManager.js';
+import { AudioManager } from './AudioManager.js';
+import { UpgradeSystem } from './UpgradeSystem.js';
 
 export class GameManager {
     constructor() {

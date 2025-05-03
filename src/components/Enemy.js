@@ -1,5 +1,5 @@
-import { XPOrb } from './XPOrb';
-import { COLLISION_GROUPS } from './CollisionGroups';
+import { XPOrb } from './XPOrb.js';
+import { COLLISION_GROUPS } from './CollisionGroups.js';
 
 export class Enemy {
     animations = {};

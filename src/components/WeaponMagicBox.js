@@ -1,5 +1,5 @@
-import { COLLISION_GROUPS } from './CollisionGroups';
-import { isPaused } from './GameState';
+import { COLLISION_GROUPS } from './CollisionGroups.js';
+import { isPaused } from './GameState.js';
 
 export class MagicBox extends pc.EventHandler {
     constructor(app, playerEntity, enemies, damage = 10, count = 3, radius = 1.5) {

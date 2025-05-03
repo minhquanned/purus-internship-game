@@ -1,4 +1,4 @@
-import { COLLISION_GROUPS } from './CollisionGroups';
+import { COLLISION_GROUPS } from './CollisionGroups.js';
 
 export class Map {
     constructor(app, mapTextureUrl, playerEntity) {

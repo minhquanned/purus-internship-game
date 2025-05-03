@@ -1,4 +1,4 @@
-import { GameManager } from './components/GameManager';
+import { GameManager } from './components/GameManager.js';
 
 // Start game when DOM is loaded
 window.addEventListener('DOMContentLoaded', () => {

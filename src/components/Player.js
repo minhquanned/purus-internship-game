@@ -1,5 +1,5 @@
-import { isPaused, setPaused } from './GameState';
-import { COLLISION_GROUPS } from './CollisionGroups';
+import { isPaused, setPaused } from './GameState.js';
+import { COLLISION_GROUPS } from './CollisionGroups.js';
 
 export class Player {
     animations = {};

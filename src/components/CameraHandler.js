@@ -1,4 +1,4 @@
-import { AmmoDebugDrawer } from './ammoDebugDrawer';
+import { AmmoDebugDrawer } from './ammoDebugDrawer.js';
 
 export class CameraHandler {
     smoothing = 10;

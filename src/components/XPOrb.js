@@ -1,4 +1,4 @@
-import { COLLISION_GROUPS } from './CollisionGroups';
+import { COLLISION_GROUPS } from './CollisionGroups.js';
 
 export class XPOrb {
     constructor(app, position, xpAmount = 50) {

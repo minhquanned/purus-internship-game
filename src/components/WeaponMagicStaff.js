@@ -1,5 +1,5 @@
-import { COLLISION_GROUPS } from './CollisionGroups';
-import { isPaused } from './GameState';
+import { COLLISION_GROUPS } from './CollisionGroups.js';
+import { isPaused } from './GameState.js';
 
 export class MagicStaff extends pc.EventHandler {
     // Stats
