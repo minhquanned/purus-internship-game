@@ -1,7 +1,11 @@
+import bgmUrl from '../../assets/sounds/You-have-no-enemies.mp3'
+import attackSFXUrl from '../../assets/sounds/Magic-staff-shoot.wav'
+import hitSFXUrl from '../../assets/sounds/Hurt.mp3'
+
 const AUDIO_DEFS = {
-    bgm: { url: 'sounds/You-have-no-enemies.mp3', loop: true },
-    attack: { url: 'sounds/Magic-staff-shoot.wav' },
-    hit: { url: 'sounds/Hurt.mp3' }
+    bgm: { url: bgmUrl, loop: true },
+    attack: { url: attackSFXUrl },
+    hit: { url: hitSFXUrl }
 };
 
 export const createAudioAssets = (app) =>
