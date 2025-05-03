@@ -1628,7 +1628,7 @@ class GameManager {
     this.app.root.addChild(light);
   }
   initializePlayer() {
-    this.player = new Player(this.app, `${BASE_PATH}/models/Mage.glb`, `${BASE_PATH}/textures/mage_texture.png`, 0.4, []);
+    this.player = new Player(this.app, `${BASE_PATH}/assets/models/Mage.glb`, `${BASE_PATH}/assets/textures/mage_texture.png`, 0.4, []);
   }
   initializeEnemyManager() {
     this.enemyManager = new EnemyManager(this.app, this.player);
