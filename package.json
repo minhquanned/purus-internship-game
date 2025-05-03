@@ -11,7 +11,7 @@
     "serve": "vite preview",
     "preview": "vite preview --port 9000",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist -m 'Deploy site'"
+    "deploy": "vite build && gh-pages -d dist"
   },
   "dependencies": {
     "ammo.js": "github:kripken/ammo.js"

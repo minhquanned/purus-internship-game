@@ -9,6 +9,9 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write # Ensure the GITHUB_TOKEN has write permissions.
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -44,10 +47,10 @@ jobs:
             git push origin gh-pages
           fi
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Ensure this token has write permissions.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          personal_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }} # Replace GITHUB_TOKEN with a PAT.
+          github_token: ${{ secrets.GITHUB_TOKEN }} # Use GITHUB_TOKEN instead of PAT.
           publish_dir: ./dist
