@@ -34,6 +34,8 @@ jobs:
 
       - name: Create gh-pages branch if it doesn't exist
         run: |
+          git config user.name "Minh Quan"
+          git config user.email "minhquan4so9@gmail.com"
           git fetch origin
           if ! git rev-parse --verify origin/gh-pages; then
             git checkout --orphan gh-pages
