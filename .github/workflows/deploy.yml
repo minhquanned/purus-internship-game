@@ -41,7 +41,7 @@ jobs:
             git checkout --orphan gh-pages
             git reset --hard
             git commit --allow-empty -m "Initial commit on gh-pages"
-            git push origin gh-pages
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/minhquanned/purus-internship-game.git gh-pages
           fi
 
       - name: Deploy to GitHub Pages
