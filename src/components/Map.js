@@ -1,4 +1,3 @@
-import * as pc from 'playcanvas';
 import { COLLISION_GROUPS } from './CollisionGroups';
 
 export class Map {

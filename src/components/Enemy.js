@@ -1,4 +1,3 @@
-import * as pc from 'playcanvas';
 import { XPOrb } from './XPOrb';
 import { COLLISION_GROUPS } from './CollisionGroups';
 

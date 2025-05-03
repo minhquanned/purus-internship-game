@@ -1,4 +1,3 @@
-import * as pc from 'playcanvas';
 import { Enemy } from './Enemy';
 
 export class EnemyManager {

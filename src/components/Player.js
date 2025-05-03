@@ -1,4 +1,3 @@
-import * as pc from 'playcanvas';
 import { isPaused, setPaused } from './GameState';
 import { COLLISION_GROUPS } from './CollisionGroups';
 

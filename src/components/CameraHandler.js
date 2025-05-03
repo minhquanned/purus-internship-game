@@ -1,4 +1,3 @@
-import * as pc from 'playcanvas';
 import { AmmoDebugDrawer } from './ammoDebugDrawer';
 
 export class CameraHandler {

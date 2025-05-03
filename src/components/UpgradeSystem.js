@@ -1,4 +1,3 @@
-import * as pc from 'playcanvas';
 import { setPaused } from './GameState';
 import { MagicStaff } from './WeaponMagicStaff.js';
 import { MagicBox } from './WeaponMagicBox.js';

@@ -1,5 +1,3 @@
-import * as pc from 'playcanvas';
-
 const AUDIO_DEFS = {
     bgm: { url: 'sounds/You-have-no-enemies.mp3', loop: true },
     attack: { url: 'sounds/Magic-staff-shoot.wav' },

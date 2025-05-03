@@ -1,4 +1,3 @@
-import * as pc from 'playcanvas';
 import { Player } from './Player';
 import { EnemyManager } from './EnemyManager';
 import { CameraHandler } from './CameraHandler';

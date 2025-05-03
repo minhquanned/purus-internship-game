@@ -1,5 +1,3 @@
-import * as pc from 'playcanvas';
-
 export class MapDecorations {
     constructor(app, map) {
         this.app = app;
