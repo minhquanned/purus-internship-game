@@ -1,5 +1,9 @@
 import { Enemy } from './Enemy.js';
 
+const BASE_PATH = window.location.pathname.includes('purus-internship-game')
+  ? '/purus-internship-game'
+  : '';
+
 export class EnemyManager {
     enemies = [];
 
@@ -113,12 +117,12 @@ export class EnemyManager {
         this.enemySpawnTimer += dt;
 
         if (this.lastEliteSpawnTime >= this.eliteInterval) {
-            this.spawnEnemy("models/Skeleton_Minion.glb", "textures/skeleton_texture.png", 0.6, true);
+            this.spawnEnemy(`${BASE_PATH}/assets/models/Skeleton_Minion.glb`, `${BASE_PATH}/assets/textures/skeleton_texture.png`, 0.6, true);
             this.lastEliteSpawnTime = 0;
         }
 
         if (this.enemySpawnTimer >= this.enemySpawnCooldown) {
-            this.spawnEnemy("models/Skeleton_Minion.glb", "textures/skeleton_texture.png", 0.4);
+            this.spawnEnemy(`${BASE_PATH}/assets/models/Skeleton_Minion.glb`, `${BASE_PATH}/assets/textures/skeleton_texture.png`, 0.4);
             this.enemySpawnTimer = 0;
         }
 

@@ -7,6 +7,10 @@ import { UIManager } from './UIManager.js';
 import { AudioManager } from './AudioManager.js';
 import { UpgradeSystem } from './UpgradeSystem.js';
 
+const BASE_PATH = window.location.pathname.includes('purus-internship-game')
+  ? '/purus-internship-game'
+  : '';
+
 export class GameManager {
     constructor() {
         this.app = null;
@@ -131,7 +135,7 @@ export class GameManager {
     }
 
     initializePlayer() {
-        this.player = new Player(this.app, "models/Mage.glb", "textures/mage_texture.png", 0.4, []);
+        this.player = new Player(this.app, `${BASE_PATH}/models/Mage.glb`, `${BASE_PATH}/textures/mage_texture.png`, 0.4, []);
     }
 
     initializeEnemyManager() {
