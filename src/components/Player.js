@@ -1,57 +1,89 @@
-import { MagicStaff } from './WeaponMagicStaff';
 import * as pc from 'playcanvas';
 import { isPaused, setPaused } from './GameState';
+import { COLLISION_GROUPS } from './CollisionGroups';
 
 export class Player {
     animations = {};
     currentAnim = "Idle";
 
-    // Movement stuff
-    movement= new pc.Vec3();
+    movement = new pc.Vec3();
     speed = 2;
-    
-    // Combat stuff
     health = 100;
     maxHealth = 100;
+    collectRange = 1.5;
 
-    // State
+    xp = 0;
+    level = 1;
+    xpToLevelUp = 50;
+
     attacking = false;
+    isAlive = true;
+
+    eventHandlers = {};
 
     constructor(app, modelUrl, textureUrl, scale, enemies) {
         this.app = app;
-        this.entity = new pc.Entity("Player");
         this.enemies = enemies;
-        // this.magicStaff = new MagicStaff(app, this.entity, this.enemies);
+        this.lastDirection = 0;
 
-        // Add script component to player entity
+        this.entity = new pc.Entity("Player");
+        this.entity.tags.add("player");
+        this.entity.setPosition(0, 1, 0);
+
+        this._initPhysics();
+        this._createPlayerScript();
+        this._loadModelAndAnimations(modelUrl, textureUrl, scale);
+
+        app.root.addChild(this.entity);
+        this._addKeyboardControls();
+    }
+
+    _initPhysics() {
+        this.entity.addComponent("collision", {
+            type: "box",
+            halfExtents: new pc.Vec3(0.2, 0.1, 0.2),
+            group: COLLISION_GROUPS.PLAYER,
+            mask: COLLISION_GROUPS.COLLECTIBLE | COLLISION_GROUPS.GROUND,
+        });
+
+        this.entity.addComponent("rigidbody", {
+            type: "dynamic",
+            mass: 1,
+            friction: 0.9,
+            linearDamping: 0.9,
+            angularDamping: 0.9,
+            group: COLLISION_GROUPS.PLAYER,
+            mask: COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.PROJECTILE | COLLISION_GROUPS.GROUND,
+        });
+
+        this.entity.rigidbody.angularFactor = new pc.Vec3(0, 1, 0);
+    }
+
+    _createPlayerScript() {
         this.entity.addComponent("script");
-        
-        // Create player script
+
         try {
             pc.createScript.get('player');
-        } catch (e) {
+        } catch {
             const PlayerScript = pc.createScript('player');
-            
-            PlayerScript.prototype.swap = function(old) {
+
+            PlayerScript.prototype.swap = function (old) {
                 this.playerInstance = old.playerInstance;
             };
-
-            PlayerScript.prototype.initialize = function() {
+            PlayerScript.prototype.initialize = function () {
                 this.playerInstance = this.entity.playerInstance;
             };
-
-            PlayerScript.prototype.takeDamage = function(damage) {
-                if (this.playerInstance) {
-                    this.playerInstance.takeDamage(damage);
-                }
+            PlayerScript.prototype.takeDamage = function (damage) {
+                this.playerInstance?.takeDamage(damage);
             };
         }
 
         this.entity.playerInstance = this;
         this.entity.script.create('player');
+    }
 
-        // Load model and animation
-        app.assets.loadFromUrl(modelUrl, "container", (err, asset) => {
+    _loadModelAndAnimations(modelUrl, textureUrl, scale) {
+        this.app.assets.loadFromUrl(modelUrl, "container", (err, asset) => {
             if (err) {
                 console.error("Error loading model: ", err);
                 return;
@@ -62,10 +94,8 @@ export class Player {
                 asset: asset?.resource.model
             });
 
-            // Edit scale
             this.entity.setLocalScale(scale, scale, scale);
 
-            // Load all animations
             if (asset?.resource.animations) {
                 this.entity.addComponent("anim", {
                     activate: true,
@@ -79,56 +109,44 @@ export class Player {
                 this.entity.anim?.baseLayer.play("Idle");
             }
 
-            this.loadTexture(textureUrl);
+            this._loadTexture(textureUrl);
         });
-        app.root.addChild(this.entity);
-
-        this.addKeyboardControls();
     }
 
-    loadTexture(textureUrl) {
+    _loadTexture(textureUrl) {
         this.app.assets.loadFromUrl(textureUrl, "texture", (err, asset) => {
-            if (err || !asset) {
-                console.error("Error loading texture: ", err);
-                return;
-            }
+            if (err || !asset) return console.error("Error loading texture:", err);
 
             const material = new pc.StandardMaterial();
             material.diffuseMap = asset.resource;
             material.update();
 
-            if (this.entity.model && this.entity.model.meshInstances.length > 0) {
-                this.entity.model.meshInstances.forEach((meshInstance) => {
-                    meshInstance.material = material;
-                });
-            }
+            this.entity.model?.meshInstances.forEach(m => m.material = material);
         });
     }
 
-    takeDamage(damage) {
-        if (this.health <= 0) return;
-        
-        this.health -= damage;
-        console.log("Player took damage! Health: ", this.health);
+    takeDamage(dmg) {
+        if (!this.isAlive) return;
 
-        // Check for death
+        this.health -= dmg;
+        console.log("Player took damage! Health:", this.health);
+
         if (this.health <= 0) {
             console.log("Player has been defeated!");
-            this.die();
+            this._die();
         }
     }
 
-    die() {
-        // Add death animation if available
+    _die() {
         if (this.animations["Lie_Down"]) {
             this.playAnimation("Lie_Down", false);
-            
-            // Delay destruction until animation completes
+            this.isAlive = false;
+
             setTimeout(() => {
                 window.gameManager.showGameOver();
                 this.entity.destroy();
                 setPaused(true);
-            }, 2000); // Adjust timeout based on animation length
+            }, 2000);
         } else {
             window.gameManager.showGameOver();
             this.entity.destroy();
@@ -136,58 +154,101 @@ export class Player {
         }
     }
 
-    playAnimation(animationName, loop = true) {
-        if (this.animations[animationName] && this.currentAnim !== animationName) {
-            this.entity.anim?.baseLayer.play(animationName);
+    gainXP(amount) {
+        this.xp += amount;
+        console.log(`💰 Gained ${amount} XP. Total XP: ${this.xp}`);
 
-            if (!loop) {
-                const animDuration = this.entity.anim?.baseLayer.activeStateDuration;
-                this.app.on("update", (dt) => {
-                    if (this.entity.anim?.baseLayer && animDuration !== undefined && this.entity.anim.baseLayer.activeStateProgress >= animDuration) {
-                        this.playAnimation("Idle");
-                    }
-                });
-            }
+        while (this.xp >= this.xpToLevelUp) this._levelUp();
+        this._updateXPUI();
+    }
 
-            this.currentAnim = animationName;
+    _levelUp() {
+        this.level++;
+        this.xp -= this.xpToLevelUp;
+        this.xpToLevelUp = Math.floor(this.xpToLevelUp * 1.2);
+        this.health = this.maxHealth;
+
+        console.log(`🎉 Level Up! Now level ${this.level}`);
+        this.fire('levelup');
+    }
+
+    playAnimation(name, loop = true) {
+        if (!this.animations[name] || this.currentAnim === name) return;
+
+        this.entity.anim?.baseLayer.play(name, { loop });
+        this.currentAnim = name;
+
+        if (!loop) {
+            const anim = this.animations[name];
+            const check = () => {
+                const base = this.entity.anim?.baseLayer;
+                if (base && base.activeTimeSeconds >= anim.duration) {
+                    this.playAnimation("Idle");
+                    this.app.off("update", check);
+                }
+            };
+            this.app.on("update", check);
         }
     }
 
-    addKeyboardControls(dt) {
-        // console.log(isPaused);
-        // if (isPaused) return;
-
+    _addKeyboardControls() {
         const keyboard = new pc.Keyboard(window);
+        window.addEventListener("contextmenu", e => e.preventDefault());
 
-        window.addEventListener("contextmenu", (event) => {
-            event.preventDefault();
-        });
+        this.app.on("update", (dt) => {
+            if (isPaused || !this.isAlive) return;
 
-        this.app.on("update", (dt) => {       
-            if (isPaused) return;     
-            if (keyboard.isPressed(pc.KEY_W)) this.movement.z -= this.speed * dt;
-            if (keyboard.isPressed(pc.KEY_A)) this.movement.x -= this.speed * dt;
-            if (keyboard.isPressed(pc.KEY_S)) this.movement.z += this.speed * dt;
-            if (keyboard.isPressed(pc.KEY_D)) this.movement.x += this.speed * dt;
+            const input = new pc.Vec3();
+            if (keyboard.isPressed(pc.KEY_W)) input.z -= 1;
+            if (keyboard.isPressed(pc.KEY_S)) input.z += 1;
+            if (keyboard.isPressed(pc.KEY_A)) input.x -= 1;
+            if (keyboard.isPressed(pc.KEY_D)) input.x += 1;
 
-            this.entity.translate(this.movement);
-
-            // Rotate the character to the direction of movement
-            if (this.movement.length() > 0) {
-                const angle = Math.atan2(this.movement.x, this.movement.z);
-                this.entity.setEulerAngles(0, angle * pc.math.RAD_TO_DEG, 0);
+            const isMoving = input.lengthSq() > 0.01;
+            if (isMoving) {
+                input.normalize().scale(this.speed);
+                this.lastDirection = Math.atan2(input.x, input.z) * pc.math.RAD_TO_DEG;
             }
-            this.movement.set(0, 0, 0);
 
-            // Update the animation
-            const moved = keyboard.isPressed(pc.KEY_W) || keyboard.isPressed(pc.KEY_S) || keyboard.isPressed(pc.KEY_A) || keyboard.isPressed(pc.KEY_D);
-            if (moved && this.currentAnim === "Idle") {
+            this.entity.setEulerAngles(0, this.lastDirection, 0);
+
+            const velY = this.entity.rigidbody.linearVelocity.y;
+            this.entity.rigidbody.linearVelocity = new pc.Vec3(input.x, velY, input.z);
+
+            if (this.entity.getPosition().y > 0.1) {
+                this.entity.rigidbody.applyForce(new pc.Vec3(0, -9.81 * this.entity.rigidbody.mass, 0));
+            }
+
+            if (isMoving && this.currentAnim === "Idle") {
                 this.playAnimation("Running_B");
-            }
-            else if (!moved && this.currentAnim === "Running_B") {
+            } else if (!isMoving && this.currentAnim === "Running_B") {
                 this.playAnimation("Idle");
             }
         });
+    }
+
+    // Custom Event System
+    on(event, callback) {
+        this.eventHandlers[event] = this.eventHandlers[event] || [];
+        this.eventHandlers[event].push(callback);
+    }
+
+    fire(event, data) {
+        this.eventHandlers[event]?.forEach(cb => cb(data));
+    }
+
+    _updateXPUI() {
+        document.dispatchEvent(new CustomEvent('player:xpUpdated', {
+            detail: {
+                xp: this.xp,
+                xpToLevelUp: this.xpToLevelUp,
+                level: this.level
+            }
+        }));
+    }
+
+    update() {
+        if (this.health > this.maxHealth) this.health = this.maxHealth;
     }
 
     setEnemies(enemies) {
@@ -196,14 +257,6 @@ export class Player {
 
     setAttacking(attacking) {
         this.attacking = attacking;
-    }
-
-    update(dt) {
-        // this.magicStaff.setEnemies(this.enemies);
-        // this.magicStaff.update(dt);
-        if (this.health > this.maxHealth) {
-            this.health = this.maxHealth;
-        }
     }
 
     getEntity() {

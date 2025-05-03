@@ -1,96 +1,74 @@
 import * as pc from 'playcanvas';
 
-export const createAudioAssets = (app) => ({
-    bgm: new pc.Asset('background-music', 'audio', {
-        url: 'sounds/You-have-no-enemies.mp3'
-    }),
-    attack: new pc.Asset('attack-sound', 'audio', {
-        url: 'sounds/Magic-staff-shoot.wav' 
-    }),
-    hit: new pc.Asset('hit-sound', 'audio', {
-        url: 'sounds/Hurt.mp3'
-    }),
-});
+const AUDIO_DEFS = {
+    bgm: { url: 'sounds/You-have-no-enemies.mp3', loop: true },
+    attack: { url: 'sounds/Magic-staff-shoot.wav' },
+    hit: { url: 'sounds/Hurt.mp3' }
+};
+
+export const createAudioAssets = (app) =>
+    Object.fromEntries(
+        Object.entries(AUDIO_DEFS).map(([key, { url }]) => [
+            key,
+            new pc.Asset(`${key}-sound`, 'audio', { url })
+        ])
+    );
 
 export class AudioManager {
-    constructor() {
-        this.app = null;
-        this.sounds = {};
-        this.bgmVolume = 0.5;
-        this.sfxVolume = 1.0;
-        this.audioAssets = null;
-        this.soundEntity = null;
-    }
+    bgmVolume = 0.5;
+    sfxVolume = 1.0;
+    sounds = {};
 
     async initialize(app) {
         this.app = app;
         this.audioAssets = createAudioAssets(app);
 
-        // Create a sound entity
         this.soundEntity = new pc.Entity('sound');
         this.soundEntity.addComponent('sound');
         this.app.root.addChild(this.soundEntity);
 
-        // Add assets to app
-        Object.values(this.audioAssets).forEach(asset => {
-            this.app.assets.add(asset);
-        });
+        Object.values(this.audioAssets).forEach(asset => this.app.assets.add(asset));
 
-        // Wait for all audio assets to load
-        return new Promise((resolve) => {
-            let loadedCount = 0;
-            const totalAssets = Object.keys(this.audioAssets).length;
-
-            Object.entries(this.audioAssets).forEach(([key, asset]) => {
-                asset.on('load', () => {
-                    // Add sound slot to the sound component
-                    const slot = {
-                        name: key,
-                        asset: asset,
-                        volume: key === 'bgm' ? this.bgmVolume : this.sfxVolume,
-                        loop: key === 'bgm'
-                    };
-
-                    this.soundEntity.sound.addSlot(key, slot);
-                    this.sounds[key] = slot;
-                    
-                    loadedCount++;
-                    if (loadedCount === totalAssets) {
+        await Promise.all(
+            Object.entries(this.audioAssets).map(([key, asset]) =>
+                new Promise((resolve) => {
+                    asset.once('load', () => {
+                        this.soundEntity.sound.addSlot(key, {
+                            name: key,
+                            asset,
+                            volume: key === 'bgm' ? this.bgmVolume : this.sfxVolume,
+                            loop: AUDIO_DEFS[key].loop || false
+                        });
+                        this.sounds[key] = this.soundEntity.sound.slots[key];
                         resolve();
-                    }
-                });
-
-                // Start loading
-                this.app.assets.load(asset);
-            });
-        });
+                    });
+                    this.app.assets.load(asset);
+                })
+            )
+        );
     }
 
     playBGM() {
-        if (this.soundEntity && this.soundEntity.sound && this.sounds.bgm) {
-            this.soundEntity.sound.play('bgm');
-        }
+        this._play('bgm');
     }
 
-    playSFX(soundName) {
-        if (this.soundEntity && this.soundEntity.sound && this.sounds[soundName]) {
-            this.soundEntity.sound.play(soundName);
-        }
+    playSFX(name) {
+        this._play(name);
     }
 
-    setBGMVolume(volume) {
-        this.bgmVolume = Math.max(0, Math.min(1, volume));
-        if (this.soundEntity && this.soundEntity.sound && this.sounds.bgm) {
-            this.soundEntity.sound.slots.bgm.volume = this.bgmVolume;
-        }
+    _play(name) {
+        this.soundEntity?.sound?.play(name);
     }
 
-    setSFXVolume(volume) {
-        this.sfxVolume = Math.max(0, Math.min(1, volume));
-        Object.keys(this.sounds).forEach(key => {
-            if (key !== 'bgm' && this.soundEntity && this.soundEntity.sound) {
-                this.soundEntity.sound.slots[key].volume = this.sfxVolume;
-            }
-        });
+    setBGMVolume(vol) {
+        this.bgmVolume = pc.math.clamp(vol, 0, 1);
+        this.sounds.bgm && (this.sounds.bgm.volume = this.bgmVolume);
+    }
+
+    setSFXVolume(vol) {
+        this.sfxVolume = pc.math.clamp(vol, 0, 1);
+        for (const [key, slot] of Object.entries(this.sounds)) {
+            if (key !== 'bgm') slot.volume = this.sfxVolume;
+        }
     }
 }

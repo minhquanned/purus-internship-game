@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="./ui/Guide.css">
     <link rel="stylesheet" href="./ui/InGame.css">
     <link rel="stylesheet" href="./ui/GameOverScreen.css">
+    <link rel="stylesheet" href="./ui/UpgradeScreen.css">
     <script src="https://cdn.jsdelivr.net/npm/@playcanvas/ammo@1.0.3/ammo/ammo.js"></script>
     <script src="https://code.playcanvas.com/playcanvas-stable.min.js"></script>
     <title>Project M</title>
@@ -27,7 +28,8 @@
         <button id="start-button" class="start-button">Start Game</button>
         <div class="version">by Ha Minh Quan</div>
     </div>
- 
+
+    <!-- GameOver Screen -->
     <div id="game-over-screen">
         <h1 id="game-over-title" class="title">Great!</h1>
         <div class="stats">
@@ -79,6 +81,20 @@
             <span id="hp-text">100/100</span>
             </div>
         </div>
+
+        <!-- XP UI -->
+        <div id="xp-bar">
+            <div id="xp-fill"></div>
+            <span id="xp-text">55.9%</span>
+        </div>        
     </div>
+
+    <!-- Upgrade Panel -->
+    <div id="upgrade-panel" class="upgrade-panel hide">
+        <div class="upgrade-options">
+            <h2>Choose an Upgrade</h2>
+            <div id="upgrade-cards" class="upgrade-cards"></div>
+        </div>
+    </div>    
 </body>
 </html>
