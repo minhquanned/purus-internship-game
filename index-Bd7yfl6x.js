@@ -1645,7 +1645,7 @@ class GameManager {
     this.player.on("levelup", () => this.upgradeSystem.handleLevelUp());
   }
   initializeMapAndCamera() {
-    this.map = new Map$1(this.app, "textures/grass_texture.jpg", this.player);
+    this.map = new Map$1(this.app, `${BASE_PATH}/assets/textures/grass_texture.jpg`, this.player);
     this.cameraHandler = new CameraHandler(this.app, this.player.entity, new pc.Vec3(0, 10, 10), 10);
     this.cameraHandler.smoothing = 15;
     this.app.root.on("xpCollected", () => this.audioManager.playSFX("collect"));
