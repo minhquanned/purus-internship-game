@@ -3,9 +3,9 @@ const BASE_PATH = window.location.pathname.includes('purus-internship-game')
   : '';
 
 const AUDIO_DEFS = {
-    bgm: { url: `${BASE_PATH}/sounds/You-have-no-enemies.mp3`, loop: true },
-    attack: { url: `${BASE_PATH}/sounds/Magic-staff-shoot.wav` },
-    hit: { url: `${BASE_PATH}/sounds/Hurt.mp3` }
+    bgm: { url: `${BASE_PATH}/assets/sounds/You-have-no-enemies.mp3`, loop: true },
+    attack: { url: `${BASE_PATH}/assets/sounds/Magic-staff-shoot.wav` },
+    hit: { url: `${BASE_PATH}/assets/sounds/Hurt.mp3` }
 };
 
 export const createAudioAssets = (app) =>
