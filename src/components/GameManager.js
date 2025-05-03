@@ -9,7 +9,7 @@ import { UpgradeSystem } from './UpgradeSystem.js';
 
 const BASE_PATH = window.location.pathname.includes('purus-internship-game')
   ? '/purus-internship-game'
-  : '';
+  : '/'; 
 
 export class GameManager {
     constructor() {
