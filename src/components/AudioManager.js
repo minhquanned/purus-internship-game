@@ -1,11 +1,11 @@
-import bgmUrl from '../../assets/sounds/You-have-no-enemies.mp3'
-import attackSFXUrl from '../../assets/sounds/Magic-staff-shoot.wav'
-import hitSFXUrl from '../../assets/sounds/Hurt.mp3'
+const BASE_PATH = window.location.pathname.includes('purus-internship-game')
+  ? '/purus-internship-game'
+  : '';
 
 const AUDIO_DEFS = {
-    bgm: { url: bgmUrl, loop: true },
-    attack: { url: attackSFXUrl },
-    hit: { url: hitSFXUrl }
+    bgm: { url: `${BASE_PATH}/sounds/You-have-no-enemies.mp3`, loop: true },
+    attack: { url: `${BASE_PATH}/sounds/Magic-staff-shoot.wav` },
+    hit: { url: `${BASE_PATH}/sounds/Hurt.mp3` }
 };
 
 export const createAudioAssets = (app) =>
