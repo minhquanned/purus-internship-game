@@ -1,3 +1,5 @@
+Chơi game tại: https://minhquanned.github.io/purus-internship-game/
+
 # 🎮 TRÒ CHƠI PHÁT TRIỂN TRÊN NỀN TẢNG PLAYCANVAS
 
 Đây là trò chơi thuộc thể loại **roguelike** dành cho người chơi casual, giải trí trong thời gian rảnh rỗi ngắn.  
